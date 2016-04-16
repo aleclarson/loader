@@ -1,12 +1,13 @@
 
 { isKind, Void } = require "type-utils"
-{ async } = require "io"
 
 emptyFunction = require "emptyFunction"
 Immutable = require "immutable"
 Factory = require "factory"
 define = require "define"
 Event = require "event"
+Retry = require "retry"
+Q = require "q"
 
 module.exports = Factory "Loader",
 
@@ -18,6 +19,7 @@ module.exports = Factory "Loader",
 
   optionTypes:
     load: [ Function, Void ]
+    retry: [ Retry.Kind, Void ]
 
   customValues:
 
@@ -31,6 +33,8 @@ module.exports = Factory "Loader",
     didAbort: Event()
 
     didFail: Event()
+
+    _retry: options.retry
 
   initReactiveValues: ->
 
@@ -50,12 +54,15 @@ module.exports = Factory "Loader",
 
     return @_loading if @isLoading
 
+    if @_retry?.isRetrying
+      @_retry.reset()
+
     aborted = no
     onAbort = @didAbort.once =>
       aborted = yes
 
     args = arguments
-    @_loading = async.try =>
+    @_loading = Q.try =>
       @_load.apply this, args
 
     .always =>
@@ -68,9 +75,11 @@ module.exports = Factory "Loader",
 
     .fail (error) =>
       @didFail.emit error
+      @_retry? => @load()
       throw error
 
   abort: ->
+    @_retry?.reset()
     return unless @isLoading
     @didAbort.emit()
     @_loading = null
