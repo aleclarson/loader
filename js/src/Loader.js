@@ -1,6 +1,6 @@
-var Event, Factory, Immutable, Q, Retry, Void, define, emptyFunction, isKind, ref;
+var Event, Factory, Immutable, Q, Retry, Void, define, emptyFunction;
 
-ref = require("type-utils"), isKind = ref.isKind, Void = ref.Void;
+Void = require("type-utils").Void;
 
 emptyFunction = require("emptyFunction");
 
@@ -19,7 +19,7 @@ Q = require("q");
 module.exports = Factory("Loader", {
   kind: Function,
   initArguments: function(options) {
-    if (isKind(options, Function)) {
+    if (options instanceof Function) {
       options = {
         load: options
       };
@@ -27,7 +27,6 @@ module.exports = Factory("Loader", {
     return [options];
   },
   optionTypes: {
-    load: [Function, Void],
     retry: [Retry.Kind, Void]
   },
   customValues: {
@@ -62,11 +61,11 @@ module.exports = Factory("Loader", {
     return this.load.apply(this, arguments);
   },
   load: function() {
-    var aborted, args, onAbort, ref1;
+    var aborted, args, onAbort, ref;
     if (this.isLoading) {
       return this._loading;
     }
-    if ((ref1 = this._retry) != null ? ref1.isRetrying : void 0) {
+    if ((ref = this._retry) != null ? ref.isRetrying : void 0) {
       this._retry.reset();
     }
     aborted = false;
@@ -105,9 +104,9 @@ module.exports = Factory("Loader", {
     })(this));
   },
   abort: function() {
-    var ref1;
-    if ((ref1 = this._retry) != null) {
-      ref1.reset();
+    var ref;
+    if ((ref = this._retry) != null) {
+      ref.reset();
     }
     if (!this.isLoading) {
       return;
@@ -119,7 +118,9 @@ module.exports = Factory("Loader", {
     this.abort();
     this._onUnload();
   },
-  _load: emptyFunction,
+  _load: function() {
+    return Q();
+  },
   _onLoad: emptyFunction.thatReturnsArgument,
   _onUnload: emptyFunction
 });

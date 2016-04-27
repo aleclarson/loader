@@ -1,5 +1,5 @@
 
-{ isKind, Void } = require "type-utils"
+{ Void } = require "type-utils"
 
 emptyFunction = require "emptyFunction"
 Immutable = require "immutable"
@@ -14,11 +14,10 @@ module.exports = Factory "Loader",
   kind: Function
 
   initArguments: (options) ->
-    options = { load: options } if isKind options, Function
+    options = { load: options } if options instanceof Function
     [ options ]
 
   optionTypes:
-    load: [ Function, Void ]
     retry: [ Retry.Kind, Void ]
 
   customValues:
@@ -94,7 +93,7 @@ module.exports = Factory "Loader",
 # Overrideable
 #
 
-  _load: emptyFunction
+  _load: -> Q()
 
   _onLoad: emptyFunction.thatReturnsArgument
 
