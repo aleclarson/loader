@@ -1,53 +1,56 @@
 
-{ Void } = require "type-utils"
+{ Void, isType } = require "type-utils"
 
 emptyFunction = require "emptyFunction"
-Immutable = require "immutable"
-Factory = require "factory"
 define = require "define"
 Event = require "event"
 Retry = require "retry"
+Type = require "Type"
 Q = require "q"
 
-module.exports = Factory "Loader",
+type = Type "Loader", ->
+  @load.apply this, arguments
 
-  kind: Function
+type.inherits Function
 
-  initArguments: (options) ->
-    options = { load: options } if options instanceof Function
-    [ options ]
+type.createArguments (args) ->
 
-  optionTypes:
-    retry: [ Retry.Kind, Void ]
+  if isType args[0], Function
+    args[0] = load: args[0]
 
-  customValues:
+  return args
 
-    isLoading: get: ->
-      @_loading?
+type.optionTypes =
+  load: Function
+  retry: [ Retry.Kind, Void ]
 
-  initFrozenValues: (options) ->
+type.optionDefaults =
+  load: emptyFunction
 
-    didLoad: Event()
+type.defineProperties
 
-    didAbort: Event()
+  isLoading: get: ->
+    @_loading isnt null
 
-    didFail: Event()
+type.defineFrozenValues
 
-    _retry: options.retry
+  didLoad: -> Event()
 
-  initReactiveValues: ->
+  didAbort: -> Event()
 
-    _loading: null
+  didFail: -> Event()
 
-  init: (options) ->
+type.defineValues
 
-    if options.load?
-      define this, "_load",
-        value: options.load
-        enumerable: no
+  retry: (options) -> options.retry
 
-  func: ->
-    @load.apply this, arguments
+  __load: (options) -> options.load
+
+type.defineReactiveValues
+
+  _loading: null
+
+type.defineMethods
 
   load: ->
 
@@ -62,7 +65,7 @@ module.exports = Factory "Loader",
 
     args = arguments
     @_loading = Q.try =>
-      @_load.apply this, args
+      @__load.apply this, args
 
     .always =>
       onAbort.stop()
@@ -70,7 +73,7 @@ module.exports = Factory "Loader",
 
     .then (result) =>
       return if aborted
-      @_onLoad result
+      @__onLoad result
 
     .fail (error) =>
       @didFail.emit error
@@ -86,15 +89,11 @@ module.exports = Factory "Loader",
 
   unload: ->
     @abort()
-    @_onUnload()
+    @__onUnload()
     return
 
-#
-# Overrideable
-#
+  __onLoad: emptyFunction.thatReturnsArgument
 
-  _load: -> Q()
+  __onUnload: emptyFunction
 
-  _onLoad: emptyFunction.thatReturnsArgument
-
-  _onUnload: emptyFunction
+module.exports = type.build()
