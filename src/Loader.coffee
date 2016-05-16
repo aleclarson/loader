@@ -1,11 +1,11 @@
 
-{ Void, isType } = require "type-utils"
-
 emptyFunction = require "emptyFunction"
+isType = require "isType"
 define = require "define"
 Event = require "event"
 Retry = require "retry"
 Type = require "Type"
+Void = require "Void"
 Q = require "q"
 
 type = Type "Loader", ->
