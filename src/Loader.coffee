@@ -11,7 +11,12 @@ Q = require "q"
 type = Type "Loader", ->
   @load.apply this, arguments
 
-type.inherits Function
+type.optionTypes =
+  load: Function
+  retry: [ Retry.Kind, Void ]
+
+type.optionDefaults =
+  load: emptyFunction
 
 type.createArguments (args) ->
 
@@ -19,13 +24,6 @@ type.createArguments (args) ->
     args[0] = load: args[0]
 
   return args
-
-type.optionTypes =
-  load: Function
-  retry: [ Retry.Kind, Void ]
-
-type.optionDefaults =
-  load: emptyFunction
 
 type.defineProperties
 

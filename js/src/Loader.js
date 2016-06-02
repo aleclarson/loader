@@ -20,7 +20,14 @@ type = Type("Loader", function() {
   return this.load.apply(this, arguments);
 });
 
-type.inherits(Function);
+type.optionTypes = {
+  load: Function,
+  retry: [Retry.Kind, Void]
+};
+
+type.optionDefaults = {
+  load: emptyFunction
+};
 
 type.createArguments(function(args) {
   if (isType(args[0], Function)) {
@@ -30,15 +37,6 @@ type.createArguments(function(args) {
   }
   return args;
 });
-
-type.optionTypes = {
-  load: Function,
-  retry: [Retry.Kind, Void]
-};
-
-type.optionDefaults = {
-  load: emptyFunction
-};
 
 type.defineProperties({
   isLoading: {
@@ -137,5 +135,3 @@ type.defineMethods({
 });
 
 module.exports = type.build();
-
-//# sourceMappingURL=../../map/src/Loader.map

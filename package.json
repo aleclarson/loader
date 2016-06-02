@@ -9,7 +9,8 @@
     "emptyFunction": "aleclarson/emptyFunction#1.0.0",
     "event": "aleclarson/event#2.0.0",
     "isType": "aleclarson/isType#1.0.0",
-    "q": "aleclarson/q#1.0.0"
+    "q": "aleclarson/q#1.0.0",
+    "retry": "aleclarson/retry#3.0.0"
   },
   "lotus": {
     "plugins": [
