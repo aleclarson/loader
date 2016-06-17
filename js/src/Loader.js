@@ -1,12 +1,18 @@
-var Event, Q, Retry, Type, Void, define, emptyFunction, isType, type;
+var Event, Loader, Promise, Retry, Type, Void, define, emptyFunction, getArgProp, getProto, isType, type;
 
 emptyFunction = require("emptyFunction");
+
+getArgProp = require("getArgProp");
+
+getProto = require("getProto");
+
+Promise = require("Promise");
 
 isType = require("isType");
 
 define = require("define");
 
-Event = require("event");
+Event = require("Event");
 
 Retry = require("retry");
 
@@ -14,20 +20,18 @@ Type = require("Type");
 
 Void = require("Void");
 
-Q = require("q");
-
 type = Type("Loader", function() {
   return this.load.apply(this, arguments);
 });
 
-type.optionTypes = {
-  load: Function,
-  retry: [Retry.Kind, Void]
-};
-
-type.optionDefaults = {
-  load: emptyFunction
-};
+type.defineOptions({
+  load: {
+    type: Function
+  },
+  retry: {
+    type: Retry.Kind
+  }
+});
 
 type.createArguments(function(args) {
   if (isType(args[0], Function)) {
@@ -59,10 +63,11 @@ type.defineFrozenValues({
 });
 
 type.defineValues({
-  retry: function(options) {
-    return options.retry;
-  },
+  retry: getArgProp("retry"),
   __load: function(options) {
+    if (getProto(this).__load !== Loader.prototype.__load) {
+      return;
+    }
     return options.load;
   }
 });
@@ -81,19 +86,18 @@ type.defineMethods({
       this._retry.reset();
     }
     aborted = false;
-    onAbort = this.didAbort.once((function(_this) {
-      return function() {
-        return aborted = true;
-      };
-    })(this));
+    onAbort = this.didAbort(1, function() {
+      return aborted = true;
+    });
+    onAbort.start();
     args = arguments;
-    return this._loading = Q["try"]((function(_this) {
+    return this._loading = Promise["try"]((function(_this) {
       return function() {
         return _this.__load.apply(_this, args);
       };
     })(this)).always((function(_this) {
       return function() {
-        onAbort.stop();
+        onAbort.detach();
         return _this._loading = null;
       };
     })(this)).then((function(_this) {
@@ -134,4 +138,8 @@ type.defineMethods({
   __onUnload: emptyFunction
 });
 
-module.exports = type.build();
+type.mustOverride(["__load"]);
+
+module.exports = Loader = type.build();
+
+//# sourceMappingURL=../../map/src/Loader.map
