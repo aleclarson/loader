@@ -1,53 +1,59 @@
 
-{ Void } = require "type-utils"
-
 emptyFunction = require "emptyFunction"
-Immutable = require "immutable"
-Factory = require "factory"
+getArgProp = require "getArgProp"
+getProto = require "getProto"
+Promise = require "Promise"
+isType = require "isType"
 define = require "define"
-Event = require "event"
+Event = require "Event"
 Retry = require "retry"
-Q = require "q"
+Type = require "Type"
+Void = require "Void"
 
-module.exports = Factory "Loader",
+type = Type "Loader", ->
+  @load.apply this, arguments
 
-  kind: Function
+type.defineOptions
 
-  initArguments: (options) ->
-    options = { load: options } if options instanceof Function
-    [ options ]
+  load:
+    type: Function
 
-  optionTypes:
-    retry: [ Retry.Kind, Void ]
+  retry:
+    type: Retry.Kind
 
-  customValues:
+type.createArguments (args) ->
 
-    isLoading: get: ->
-      @_loading?
+  if isType args[0], Function
+    args[0] = load: args[0]
 
-  initFrozenValues: (options) ->
+  return args
 
-    didLoad: Event()
+type.defineProperties
 
-    didAbort: Event()
+  isLoading: get: ->
+    @_loading isnt null
 
-    didFail: Event()
+type.defineFrozenValues
 
-    _retry: options.retry
+  didLoad: -> Event()
 
-  initReactiveValues: ->
+  didAbort: -> Event()
 
-    _loading: null
+  didFail: -> Event()
 
-  init: (options) ->
+type.defineValues
 
-    if options.load?
-      define this, "_load",
-        value: options.load
-        enumerable: no
+  retry: getArgProp "retry"
 
-  func: ->
-    @load.apply this, arguments
+  __load: (options) ->
+    return if getProto(this).__load isnt Loader::__load
+    return options.load
+
+type.defineReactiveValues
+
+  _loading: null
+
+type.defineMethods
 
   load: ->
 
@@ -57,20 +63,20 @@ module.exports = Factory "Loader",
       @_retry.reset()
 
     aborted = no
-    onAbort = @didAbort.once =>
-      aborted = yes
+    onAbort = @didAbort 1, -> aborted = yes
+    onAbort.start()
 
     args = arguments
-    @_loading = Q.try =>
-      @_load.apply this, args
+    @_loading = Promise.try =>
+      @__load.apply this, args
 
     .always =>
-      onAbort.stop()
+      onAbort.detach()
       @_loading = null
 
     .then (result) =>
       return if aborted
-      @_onLoad result
+      @__onLoad result
 
     .fail (error) =>
       @didFail.emit error
@@ -86,15 +92,15 @@ module.exports = Factory "Loader",
 
   unload: ->
     @abort()
-    @_onUnload()
+    @__onUnload()
     return
 
-#
-# Overrideable
-#
+  __onLoad: emptyFunction.thatReturnsArgument
 
-  _load: -> Q()
+  __onUnload: emptyFunction
 
-  _onLoad: emptyFunction.thatReturnsArgument
+type.mustOverride [
+  "__load"
+]
 
-  _onUnload: emptyFunction
+module.exports = Loader = type.build()

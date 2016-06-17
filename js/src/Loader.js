@@ -1,65 +1,82 @@
-var Event, Factory, Immutable, Q, Retry, Void, define, emptyFunction;
-
-Void = require("type-utils").Void;
+var Event, Loader, Promise, Retry, Type, Void, define, emptyFunction, getArgProp, getProto, isType, type;
 
 emptyFunction = require("emptyFunction");
 
-Immutable = require("immutable");
+getArgProp = require("getArgProp");
 
-Factory = require("factory");
+getProto = require("getProto");
+
+Promise = require("Promise");
+
+isType = require("isType");
 
 define = require("define");
 
-Event = require("event");
+Event = require("Event");
 
 Retry = require("retry");
 
-Q = require("q");
+Type = require("Type");
 
-module.exports = Factory("Loader", {
-  kind: Function,
-  initArguments: function(options) {
-    if (options instanceof Function) {
-      options = {
-        load: options
-      };
-    }
-    return [options];
+Void = require("Void");
+
+type = Type("Loader", function() {
+  return this.load.apply(this, arguments);
+});
+
+type.defineOptions({
+  load: {
+    type: Function
   },
-  optionTypes: {
-    retry: [Retry.Kind, Void]
-  },
-  customValues: {
-    isLoading: {
-      get: function() {
-        return this._loading != null;
-      }
-    }
-  },
-  initFrozenValues: function(options) {
-    return {
-      didLoad: Event(),
-      didAbort: Event(),
-      didFail: Event(),
-      _retry: options.retry
+  retry: {
+    type: Retry.Kind
+  }
+});
+
+type.createArguments(function(args) {
+  if (isType(args[0], Function)) {
+    args[0] = {
+      load: args[0]
     };
-  },
-  initReactiveValues: function() {
-    return {
-      _loading: null
-    };
-  },
-  init: function(options) {
-    if (options.load != null) {
-      return define(this, "_load", {
-        value: options.load,
-        enumerable: false
-      });
+  }
+  return args;
+});
+
+type.defineProperties({
+  isLoading: {
+    get: function() {
+      return this._loading !== null;
     }
+  }
+});
+
+type.defineFrozenValues({
+  didLoad: function() {
+    return Event();
   },
-  func: function() {
-    return this.load.apply(this, arguments);
+  didAbort: function() {
+    return Event();
   },
+  didFail: function() {
+    return Event();
+  }
+});
+
+type.defineValues({
+  retry: getArgProp("retry"),
+  __load: function(options) {
+    if (getProto(this).__load !== Loader.prototype.__load) {
+      return;
+    }
+    return options.load;
+  }
+});
+
+type.defineReactiveValues({
+  _loading: null
+});
+
+type.defineMethods({
   load: function() {
     var aborted, args, onAbort, ref;
     if (this.isLoading) {
@@ -69,19 +86,18 @@ module.exports = Factory("Loader", {
       this._retry.reset();
     }
     aborted = false;
-    onAbort = this.didAbort.once((function(_this) {
-      return function() {
-        return aborted = true;
-      };
-    })(this));
+    onAbort = this.didAbort(1, function() {
+      return aborted = true;
+    });
+    onAbort.start();
     args = arguments;
-    return this._loading = Q["try"]((function(_this) {
+    return this._loading = Promise["try"]((function(_this) {
       return function() {
-        return _this._load.apply(_this, args);
+        return _this.__load.apply(_this, args);
       };
     })(this)).always((function(_this) {
       return function() {
-        onAbort.stop();
+        onAbort.detach();
         return _this._loading = null;
       };
     })(this)).then((function(_this) {
@@ -89,7 +105,7 @@ module.exports = Factory("Loader", {
         if (aborted) {
           return;
         }
-        return _this._onLoad(result);
+        return _this.__onLoad(result);
       };
     })(this)).fail((function(_this) {
       return function(error) {
@@ -116,13 +132,14 @@ module.exports = Factory("Loader", {
   },
   unload: function() {
     this.abort();
-    this._onUnload();
+    this.__onUnload();
   },
-  _load: function() {
-    return Q();
-  },
-  _onLoad: emptyFunction.thatReturnsArgument,
-  _onUnload: emptyFunction
+  __onLoad: emptyFunction.thatReturnsArgument,
+  __onUnload: emptyFunction
 });
+
+type.mustOverride(["__load"]);
+
+module.exports = Loader = type.build();
 
 //# sourceMappingURL=../../map/src/Loader.map
