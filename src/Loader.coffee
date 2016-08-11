@@ -1,6 +1,6 @@
 
 emptyFunction = require "emptyFunction"
-getArgProp = require "getArgProp"
+fromArgs = require "fromArgs"
 getProto = require "getProto"
 Promise = require "Promise"
 isType = require "isType"
@@ -14,12 +14,8 @@ type = Type "Loader", ->
   @load.apply this, arguments
 
 type.defineOptions
-
-  load:
-    type: Function
-
-  retry:
-    type: Retry.Kind
+  load: Function
+  retry: Retry.Kind
 
 type.createArguments (args) ->
 
@@ -28,22 +24,9 @@ type.createArguments (args) ->
 
   return args
 
-type.defineProperties
-
-  isLoading: get: ->
-    @_loading isnt null
-
-type.defineFrozenValues
-
-  didLoad: -> Event()
-
-  didAbort: -> Event()
-
-  didFail: -> Event()
-
 type.defineValues
 
-  retry: getArgProp "retry"
+  retry: fromArgs "retry"
 
   __load: (options) ->
     return if getProto(this).__load isnt Loader::__load
@@ -52,6 +35,17 @@ type.defineValues
 type.defineReactiveValues
 
   _loading: null
+
+type.defineEvents
+
+  didAbort: null
+
+  didFail:
+    error: Error.Kind
+
+type.defineGetters
+
+  isLoading: -> @_loading isnt null
 
 type.defineMethods
 
@@ -79,14 +73,14 @@ type.defineMethods
       @__onLoad result
 
     .fail (error) =>
-      @didFail.emit error
+      @_events.emit "didFail", [ error ]
       @_retry? => @load()
       throw error
 
   abort: ->
-    @_retry?.reset()
+    @_retry and @_retry.reset()
     return unless @isLoading
-    @didAbort.emit()
+    @_events.emit "didAbort"
     @_loading = null
     return
 
@@ -95,12 +89,12 @@ type.defineMethods
     @__onUnload()
     return
 
+type.defineHooks
+
+  __load: null
+
   __onLoad: emptyFunction.thatReturnsArgument
 
   __onUnload: emptyFunction
-
-type.mustOverride [
-  "__load"
-]
 
 module.exports = Loader = type.build()

@@ -1,8 +1,8 @@
-var Event, Loader, Promise, Retry, Type, Void, define, emptyFunction, getArgProp, getProto, isType, type;
+var Event, Loader, Promise, Retry, Type, Void, define, emptyFunction, fromArgs, getProto, isType, type;
 
 emptyFunction = require("emptyFunction");
 
-getArgProp = require("getArgProp");
+fromArgs = require("fromArgs");
 
 getProto = require("getProto");
 
@@ -25,12 +25,8 @@ type = Type("Loader", function() {
 });
 
 type.defineOptions({
-  load: {
-    type: Function
-  },
-  retry: {
-    type: Retry.Kind
-  }
+  load: Function,
+  retry: Retry.Kind
 });
 
 type.createArguments(function(args) {
@@ -42,28 +38,8 @@ type.createArguments(function(args) {
   return args;
 });
 
-type.defineProperties({
-  isLoading: {
-    get: function() {
-      return this._loading !== null;
-    }
-  }
-});
-
-type.defineFrozenValues({
-  didLoad: function() {
-    return Event();
-  },
-  didAbort: function() {
-    return Event();
-  },
-  didFail: function() {
-    return Event();
-  }
-});
-
 type.defineValues({
-  retry: getArgProp("retry"),
+  retry: fromArgs("retry"),
   __load: function(options) {
     if (getProto(this).__load !== Loader.prototype.__load) {
       return;
@@ -74,6 +50,19 @@ type.defineValues({
 
 type.defineReactiveValues({
   _loading: null
+});
+
+type.defineEvents({
+  didAbort: null,
+  didFail: {
+    error: Error.Kind
+  }
+});
+
+type.defineGetters({
+  isLoading: function() {
+    return this._loading !== null;
+  }
 });
 
 type.defineMethods({
@@ -109,7 +98,7 @@ type.defineMethods({
       };
     })(this)).fail((function(_this) {
       return function(error) {
-        _this.didFail.emit(error);
+        _this._events.emit("didFail", [error]);
         if (typeof _this._retry === "function") {
           _this._retry(function() {
             return _this.load();
@@ -120,25 +109,24 @@ type.defineMethods({
     })(this));
   },
   abort: function() {
-    var ref;
-    if ((ref = this._retry) != null) {
-      ref.reset();
-    }
+    this._retry && this._retry.reset();
     if (!this.isLoading) {
       return;
     }
-    this.didAbort.emit();
+    this._events.emit("didAbort");
     this._loading = null;
   },
   unload: function() {
     this.abort();
     this.__onUnload();
-  },
+  }
+});
+
+type.defineHooks({
+  __load: null,
   __onLoad: emptyFunction.thatReturnsArgument,
   __onUnload: emptyFunction
 });
-
-type.mustOverride(["__load"]);
 
 module.exports = Loader = type.build();
 
