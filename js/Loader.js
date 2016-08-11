@@ -142,4 +142,4 @@ type.mustOverride(["__load"]);
 
 module.exports = Loader = type.build();
 
-//# sourceMappingURL=../../map/src/Loader.map
+//# sourceMappingURL=map/Loader.map

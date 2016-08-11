@@ -1,7 +1,7 @@
 {
   "name": "loader",
   "version": "2.0.0",
-  "main": "js/src/Loader",
+  "main": "js/Loader",
   "dependencies": {
     "Event": "aleclarson/Event#2.0.0",
     "Promise": "aleclarson/Promise#1.0.0",
