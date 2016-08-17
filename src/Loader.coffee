@@ -13,16 +13,14 @@ Void = require "Void"
 type = Type "Loader", ->
   @load.apply this, arguments
 
+type.initArgs (args) ->
+  if isType args[0], Function
+    args[0] = load: args[0]
+  return
+
 type.defineOptions
   load: Function
   retry: Retry.Kind
-
-type.createArguments (args) ->
-
-  if isType args[0], Function
-    args[0] = load: args[0]
-
-  return args
 
 type.defineValues
 

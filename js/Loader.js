@@ -24,18 +24,17 @@ type = Type("Loader", function() {
   return this.load.apply(this, arguments);
 });
 
-type.defineOptions({
-  load: Function,
-  retry: Retry.Kind
-});
-
-type.createArguments(function(args) {
+type.initArgs(function(args) {
   if (isType(args[0], Function)) {
     args[0] = {
       load: args[0]
     };
   }
-  return args;
+});
+
+type.defineOptions({
+  load: Function,
+  retry: Retry.Kind
 });
 
 type.defineValues({
