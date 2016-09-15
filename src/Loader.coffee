@@ -1,14 +1,11 @@
 
 emptyFunction = require "emptyFunction"
-fromArgs = require "fromArgs"
 getProto = require "getProto"
 Promise = require "Promise"
 isType = require "isType"
-define = require "define"
 Event = require "Event"
-Retry = require "retry"
+Retry = require "Retry"
 Type = require "Type"
-Void = require "Void"
 
 type = Type "Loader", ->
   @load.apply this, arguments
@@ -24,7 +21,7 @@ type.defineOptions
 
 type.defineValues
 
-  retry: fromArgs "retry"
+  retry: (options) -> options.retry
 
   __load: (options) ->
     return if getProto(this).__load isnt Loader::__load
@@ -38,8 +35,7 @@ type.defineEvents
 
   didAbort: null
 
-  didFail:
-    error: Error.Kind
+  didFail: {error: Error.Kind}
 
 type.defineGetters
 
@@ -71,14 +67,14 @@ type.defineMethods
       @__onLoad result
 
     .fail (error) =>
-      @_events.emit "didFail", [ error ]
+      @__events.didFail error
       @_retry? => @load()
       throw error
 
   abort: ->
     @_retry and @_retry.reset()
     return unless @isLoading
-    @_events.emit "didAbort"
+    @__events.didAbort()
     @_loading = null
     return
 
