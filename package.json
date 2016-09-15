@@ -2,6 +2,13 @@
   "name": "loader",
   "version": "2.0.0",
   "main": "js/Loader",
+  "plugins": [
+    "lotus-coffee"
+  ],
+  "scripts": {
+    "build": "coffee -cb -o js src",
+    "postinstall": "postinstall-build js 'npm run build'"
+  },
   "dependencies": {
     "Event": "aleclarson/Event#2.0.1",
     "Promise": "aleclarson/Promise#1.0.0",
@@ -13,10 +20,9 @@
     "getProto": "aleclarson/getProto#1.0.0",
     "isType": "aleclarson/isType#1.0.0",
     "retry": "aleclarson/retry#3.0.0"
+    "postinstall-build": "0.2.x"
   },
-  "lotus": {
-    "plugins": [
-      "lotus-coffee"
-    ]
+  "devDependencies": {
+    "coffee-script": "1.9.x"
   }
 }
