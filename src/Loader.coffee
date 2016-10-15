@@ -7,8 +7,9 @@ Event = require "Event"
 Retry = require "Retry"
 Type = require "Type"
 
-type = Type "Loader", ->
-  @load.apply this, arguments
+type = Type "Loader"
+
+type.inherits Function
 
 type.initArgs (args) ->
   if isType args[0], Function
@@ -18,6 +19,9 @@ type.initArgs (args) ->
 type.defineOptions
   load: Function
   retry: Retry.Kind
+
+type.createInstance ->
+  self = -> self.load.apply self, arguments
 
 type.defineValues
 
