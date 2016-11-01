@@ -35,7 +35,7 @@ type.defineReactiveValues
 
   _loading: null
 
-type.defineEvents
+type.addMixin Event.Mixin,
 
   didAbort: null
 
