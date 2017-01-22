@@ -36,9 +36,7 @@ type.defineReactiveValues
   _loading: null
 
 type.addMixin Event.Mixin,
-
   didAbort: null
-
   didFail: {error: Error.Kind}
 
 type.defineGetters
@@ -55,7 +53,7 @@ type.defineMethods
       @_retry.reset()
 
     aborted = no
-    onAbort = @didAbort 1, -> aborted = yes
+    onAbort = @once "didAbort", -> aborted = yes
     onAbort.start()
 
     args = arguments
@@ -71,14 +69,14 @@ type.defineMethods
       @__onLoad result
 
     .fail (error) =>
-      @__events.didFail error
+      @emit "didFail", error
       @_retry? => @load()
       throw error
 
   abort: ->
     @_retry and @_retry.reset()
     return unless @isLoading
-    @__events.didAbort()
+    @emit "didAbort"
     @_loading = null
     return
 
