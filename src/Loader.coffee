@@ -11,12 +11,12 @@ type = Type "Loader"
 
 type.inherits Function
 
-type.initArgs (args) ->
+type.createArgs (args) ->
   if isType args[0], Function
     args[0] = load: args[0]
-  return
+  return args
 
-type.defineOptions
+type.defineArgs
   load: Function
   retry: Retry.Kind
 
