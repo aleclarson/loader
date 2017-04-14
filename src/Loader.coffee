@@ -1,9 +1,10 @@
 
+require("eve").installMixin()
+
 emptyFunction = require "emptyFunction"
 getProto = require "getProto"
 Promise = require "Promise"
 isType = require "isType"
-Event = require "Event"
 Retry = require "Retry"
 Type = require "Type"
 
@@ -35,7 +36,7 @@ type.defineReactiveValues
 
   _loading: null
 
-type.addMixin Event.Mixin,
+type.defineEvents
   didAbort: null
   didFail: {error: Error.Kind}
 
